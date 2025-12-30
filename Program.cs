@@ -51,14 +51,14 @@ class Program
         {
             try
             {
-                // בדיקת תקינות נתיב הפלט (Validation)
+                // בדיקת תקינות: וידוא שהמשתמש הזין נתיב פלט
                 if (output == null)
                 {
                     Console.WriteLine("ERROR: Output file path is required.");
                     return;
                 }
 
-                // מפת שפות מורחבת (כולל שפות נוספות שביקשת)
+                // מפת סיומות לתמיכה במגוון שפות תכנות
                 var extensionMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
                     { "cs", ".cs" }, { "csharp", ".cs" },
@@ -73,16 +73,16 @@ class Program
 
                 string currentDirectory = Directory.GetCurrentDirectory();
 
-                // איסוף קבצים וסינון תיקיות bin/obj/debug (דרישת פרויקט)
+                // סריקת קבצים תוך התעלמות מתיקיות bin, obj ו-debug
                 var allFiles = Directory.GetFiles(currentDirectory, "*.*", SearchOption.AllDirectories)
-                    .Where(f => !f.Split(Path.DirectorySeparatorChar).Any(part =>
-                        part.Equals("bin", StringComparison.OrdinalIgnoreCase) ||
-                        part.Equals("obj", StringComparison.OrdinalIgnoreCase) ||
+                    .Where(f => !f.Split(Path.DirectorySeparatorChar).Any(part => 
+                        part.Equals("bin", StringComparison.OrdinalIgnoreCase) || 
+                        part.Equals("obj", StringComparison.OrdinalIgnoreCase) || 
                         part.Equals("debug", StringComparison.OrdinalIgnoreCase)))
                     .Where(f => !f.EndsWith(output.Name)) // מניעת כניסת קובץ הפלט לתוך עצמו
                     .ToList();
 
-                // סינון לפי שפות
+                // סינון הקבצים לפי השפות שנבחרו
                 List<string> selectedExtensions = new List<string>();
                 if (lang.ToLower() == "all")
                 {
@@ -102,7 +102,7 @@ class Program
                     .Where(f => selectedExtensions.Contains(Path.GetExtension(f).ToLower()))
                     .ToList();
 
-                // מיון קבצים (דרישת sort)
+                // (מיון הקבצים לפי בחירת המשתמש (שם או סיומת
                 filesToBundle = sort.ToLower() == "type"
                     ? filesToBundle.OrderBy(f => Path.GetExtension(f)).ThenBy(f => Path.GetFileName(f)).ToList()
                     : filesToBundle.OrderBy(f => Path.GetFileName(f)).ToList();
@@ -113,9 +113,10 @@ class Program
                     return;
                 }
 
-                // כתיבה לקובץ
+                // תהליך כתיבת הקבצים לקובץ המאוחד
                 using (var writer = new StreamWriter(output.FullName))
                 {
+                    // הוספת שם מחבר בראש הקובץ במידה וסופק
                     if (!string.IsNullOrEmpty(author))
                     {
                         writer.WriteLine($"// Author: {author}");
@@ -124,12 +125,14 @@ class Program
 
                     foreach (var file in filesToBundle)
                     {
+                        // (כתיבת הערת מקור (נתיב יחסי
                         if (note)
                         {
                             string relativePath = Path.GetRelativePath(currentDirectory, file);
                             writer.WriteLine($"// --- Source: {relativePath} ---");
                         }
 
+                        // קריאת שורות הקוד וסינון שורות ריקות במידה ונדרש
                         var lines = File.ReadAllLines(file);
                         foreach (var line in lines)
                         {
@@ -156,6 +159,7 @@ class Program
         {
             Console.WriteLine("=== Response File Creator ===");
 
+            // איסוף נתונים מהמשתמש לבניית הפקודה
             Console.Write("Enter languages (e.g., 'cs, java' or 'all'): ");
             var lang = Console.ReadLine();
             while (string.IsNullOrWhiteSpace(lang)) { Console.Write("Required! Languages: "); lang = Console.ReadLine(); }
@@ -177,7 +181,7 @@ class Program
             Console.Write("Author name (optional): ");
             var author = Console.ReadLine();
 
-            // בניית תוכן קובץ ה-RSP (במבנה של טוקנים נפרדים לקריאות)
+            // בניית תוכן קובץ ה-rsp בשורות נפרדות לקריאות מקסימלית
             var rspContent = new List<string>();
             rspContent.Add($"bundle");
             rspContent.Add($"--language {lang}");
@@ -187,12 +191,13 @@ class Program
             rspContent.Add($"--sort {sort}");
             if (!string.IsNullOrEmpty(author)) rspContent.Add($"--author \"{author}\"");
 
+            // שמירת הפקודה לקובץ
             File.WriteAllLines("options.rsp", rspContent);
             Console.WriteLine("\nSUCCESS! 'options.rsp' created.");
             Console.WriteLine("To run: dotnet run -- @options.rsp");
         });
 
-        // --- 4. הגדרת Root וביצוע ---
+        // --- 4. הגדרת פקודת השורש (Root) והרצה ---
         var rootCommand = new RootCommand("File Bundler CLI Tool");
         rootCommand.AddCommand(bundleCommand);
         rootCommand.AddCommand(createRspCommand);
