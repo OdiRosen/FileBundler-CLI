@@ -9,7 +9,7 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-        // --- 1. הגדרת האופציות (Options) לפי דרישות הפרויקט ---
+        // --- 1. הגדרת האופציות (Options) עבור פקודת ה-bundle ---
 
         var languageOption = new Option<string>(
             aliases: new[] { "--language", "-l" },
